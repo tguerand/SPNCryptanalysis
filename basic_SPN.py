@@ -48,6 +48,28 @@ def SPN(text, subkeys):
         
         ## KEY MIX: XOR
         cypher = cypher ^ subk[i]
+        ## SUBSTITUTION
+        cypher = [subs_dict[cypher[i]] for i in range(len(cypher))]
+        ## PERMUTATION
+        cypher = [cypher[perm_table[i]] for i in range(len(cypher))]
+        
+    # 4TH KEY MIX
+    cypher = cypher ^ subk[3]
+    
+    # LAST SUBSTITUTION
+    cypher = [subs_dict[cypher[i]] for i in range(len(cypher))]
+    
+    # LAST KEY MIX
+    cypher = cypher ^ subk[4]
+    
+    return cypher
         
         
+def decrypt(cypher, subkeys):
+    
+    pass
+
+if __name__  == '__main__':
+    
+    text = 
         
