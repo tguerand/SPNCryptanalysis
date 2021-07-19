@@ -11,7 +11,8 @@ Followed tutorial from http://www.cs.bc.edu/~straubin/crypto2017/heys.pdf
 """
 
 import numpy as np
-import random
+import secrets
+import binascii
 
 HEX_TABLE = "0123456789ABCDEF"
 HEX_DICT = {i: hex(i) for i in range(16)}
@@ -29,38 +30,44 @@ perm_table = {i:perm_table[i] for i in range(BLOCK_SIZE)}
 
 ### STEP 3: key mix
 # We need 5 key block of size 16 each
-keys = random.getrandbits(BLOCK_SIZE*5)
+keys = secrets.token_bytes(BLOCK_SIZE*5)
 
-def SPN(text, subkeys):
+
+def byte_xor(ba1, ba2):
+    return bytes([_a ^ _b for _a, _b in zip(ba1, ba2)])
+
+
+def SPN(text, subkeys=keys):
     """Simple Substitution Permutation Network"""
     
     cypher = text
     
-    k1 = hex(subkeys[:BLOCK_SIZE])
-    k2 = hex(subkeys[BLOCK_SIZE:2*BLOCK_SIZE])
-    k3 = hex(subkeys[2*BLOCK_SIZE:3*BLOCK_SIZE])
-    k4 = hex(subkeys[3*BLOCK_SIZE:4*BLOCK_SIZE])
-    k5 = hex(subkeys[4*BLOCK_SIZE:])
+    k1 = bytes.fromhex(subkeys[:BLOCK_SIZE].hex())
+    k2 = bytes.fromhex(subkeys[BLOCK_SIZE:2*BLOCK_SIZE].hex())
+    k3 = bytes.fromhex(subkeys[2*BLOCK_SIZE:3*BLOCK_SIZE].hex())
+    k4 = bytes.fromhex(subkeys[3*BLOCK_SIZE:4*BLOCK_SIZE].hex())
+    k5 = bytes.fromhex(subkeys[4*BLOCK_SIZE:].hex())
+
 
     subk = [k1, k2, k3, k4, k5]
 
     for i in range(3):
-        
+        print(cypher)
         ## KEY MIX: XOR
-        cypher = cypher ^ subk[i]
+        cypher = byte_xor(cypher, subk[i]).hex()
         ## SUBSTITUTION
         cypher = [subs_dict[cypher[i]] for i in range(len(cypher))]
         ## PERMUTATION
         cypher = [cypher[perm_table[i]] for i in range(len(cypher))]
-        
+        cypher = bytes.fromhex(cypher)
     # 4TH KEY MIX
-    cypher = cypher ^ subk[3]
+    cypher = byte_xor(cypher, subk[3])
     
     # LAST SUBSTITUTION
     cypher = [subs_dict[cypher[i]] for i in range(len(cypher))]
     
     # LAST KEY MIX
-    cypher = cypher ^ subk[4]
+    cypher = byte_xor(cypher, subk[4])
     
     return cypher
         
@@ -71,5 +78,11 @@ def decrypt(cypher, subkeys):
 
 if __name__  == '__main__':
     
-    text = 
+    text = b'hello'
+    hex_text = binascii.hexlify(text)
+    print(hex_text)
+    
+    
+    cypher = SPN(hex_text)
+    print(cypher)
         
