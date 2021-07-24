@@ -56,10 +56,18 @@ def SPN(text, subkeys=keys):
         
         ## KEY MIX: XOR
         cypher = byte_xor(cypher, subk[i]).hex()
-        print(len(cypher))
         ## SUBSTITUTION
         cypher = [subs_dict[cypher[i]] for i in range(len(cypher))]
         ## PERMUTATION
+        
+        
+        ## TODO : permutation and subsitution are on bytes and not on characters!!!
+        ## Thus we must convert the hex to bytes of 16 and then apply subsitution and
+        ## permutation on them
+        
+        ## What a drag!
+        
+        
         
         cypher = [cypher[perm_table[i]] for i in range(len(cypher))]
         cypher = bytes.fromhex(cypher)
