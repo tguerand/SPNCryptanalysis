@@ -12,7 +12,9 @@ Followed tutorial from http://www.cs.bc.edu/~straubin/crypto2017/heys.pdf
 
 import numpy as np
 import secrets
-import binascii
+import os
+
+np.random.seed(42)
 
 HEX_TABLE = ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"]
 HEX_DICT = {str(i): HEX_TABLE[i] for i in range(16)}
@@ -30,18 +32,55 @@ perm_table = {i:perm_table[i] for i in range(BLOCK_SIZE)}
 
 ### STEP 3: key mix
 # We need 5 key block of size 16 each
-keys = secrets.token_bytes(BLOCK_SIZE*5)
+def generate_keys(path=None):
+    if path is not None:
+        with open(path, 'rb') as fkey:
+            keys = fkey.read()
+    else:
+        keys = secrets.token_bytes(BLOCK_SIZE*5)
+        with open('keys.txt', 'w') as fkey:
+            fkey.write(str(keys))
+    return keys
 
+
+
+def hex_pad(hex_in):
+    
+    if len(hex_in)<4:
+        hex_in = "0" * (4-len(hex_in)) + hex_in
+    return hex_in
 
 def byte_xor(ba1, ba2):
     xor = bytes([_a ^ _b for _a, _b in zip(ba1, ba2)])
     return xor
 
+def subs(hex_input):
+    
+    hex_out = ''
+    for char in hex_input:
+        hex_out += subs_dict[char]
+    return hex_out
 
-def SPN(text, subkeys=keys):
+def perm(hex_input):
+    
+    b_in = bin(int(hex_input, 16))[2:]
+    
+    if len(b_in)<16:
+        b_in = '0'*(16-len(b_in)) + b_in
+
+    b_out = ''
+    
+    for i in range(16):
+        b_out += b_in[perm_table[i]]
+        
+    hex_out = hex(int(b_out,2))[2:]
+    return hex_out
+
+def SPN(text, subkeys):
     """Simple Substitution Permutation Network"""
     
     cypher = bytearray.fromhex(text[2:])
+
     
     k1 = bytes.fromhex(subkeys[:BLOCK_SIZE].hex())
     k2 = bytes.fromhex(subkeys[BLOCK_SIZE:2*BLOCK_SIZE].hex())
@@ -57,28 +96,20 @@ def SPN(text, subkeys=keys):
         ## KEY MIX: XOR
         cypher = byte_xor(cypher, subk[i]).hex()
         ## SUBSTITUTION
-        cypher = [subs_dict[cypher[i]] for i in range(len(cypher))]
+        cypher = subs(cypher)
         ## PERMUTATION
+        cypher = hex_pad(perm(cypher))
         
-        
-        ## TODO : permutation and subsitution are on bytes and not on characters!!!
-        ## Thus we must convert the hex to bytes of 16 and then apply subsitution and
-        ## permutation on them
-        
-        ## What a drag!
-        
-        
-        
-        cypher = [cypher[perm_table[i]] for i in range(len(cypher))]
         cypher = bytes.fromhex(cypher)
     # 4TH KEY MIX
-    cypher = byte_xor(cypher, subk[3])
+    cypher = byte_xor(cypher, subk[3]).hex()
     
     # LAST SUBSTITUTION
-    cypher = [subs_dict[cypher[i]] for i in range(len(cypher))]
+    cypher = subs(cypher)
     
     # LAST KEY MIX
-    cypher = byte_xor(cypher, subk[4])
+    cypher = bytes.fromhex(cypher)
+    cypher = byte_xor(cypher, subk[4]).hex()
     
     return cypher
         
@@ -91,9 +122,11 @@ if __name__  == '__main__':
     
     text = 0b0010011010110111
     hex_text = hex(text)
-    print(len(hex_text))
     
-    
-    cypher = SPN(hex_text)
+    if os.path.exists('keys.txt'):
+        keys = generate_keys(path='keys.txt')
+    else:
+        keys = generate_keys(path=None)
+    cypher = SPN(hex_text, keys)
     print(cypher)
         
