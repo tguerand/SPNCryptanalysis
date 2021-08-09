@@ -29,6 +29,7 @@ rev_subs_dict = {v:k for k,v in subs_dict.items()}
 ### STEP 2: permutation
 perm_table = np.random.permutation(BLOCK_SIZE)
 perm_table = {i:perm_table[i] for i in range(BLOCK_SIZE)}
+rev_perm_table = {v:k for k,v in perm_table.items()}
 
 ### STEP 3: key mix
 # We need 5 key block of size 16 each
@@ -54,14 +55,14 @@ def byte_xor(ba1, ba2):
     xor = bytes([_a ^ _b for _a, _b in zip(ba1, ba2)])
     return xor
 
-def subs(hex_input):
+def subs(hex_input, subs_dict=subs_dict):
     
     hex_out = ''
     for char in hex_input:
         hex_out += subs_dict[char]
     return hex_out
 
-def perm(hex_input):
+def perm(hex_input, perm_table=perm_table):
     
     b_in = bin(int(hex_input, 16))[2:]
     
@@ -116,12 +117,37 @@ def SPN(text, subkeys):
         
 def decrypt(cypher, subkeys):
     
-    pass
+    k1 = bytes.fromhex(subkeys[:BLOCK_SIZE].hex())
+    k2 = bytes.fromhex(subkeys[BLOCK_SIZE:2*BLOCK_SIZE].hex())
+    k3 = bytes.fromhex(subkeys[2*BLOCK_SIZE:3*BLOCK_SIZE].hex())
+    k4 = bytes.fromhex(subkeys[3*BLOCK_SIZE:4*BLOCK_SIZE].hex())
+    k5 = bytes.fromhex(subkeys[4*BLOCK_SIZE:].hex())
+
+
+    subk = [k1, k2, k3, k4, k5]
+    
+    cypher = bytes.fromhex(cypher)
+    cypher = byte_xor(cypher, subk[4]).hex()
+    # LAST SUBSTITUTION
+    cypher = subs(cypher, subs_dict=rev_subs_dict)
+    cypher = bytes.fromhex(cypher)
+    
+    for i in range(3,0,-1):
+    
+        cypher = byte_xor(cypher, subk[i]).hex()
+        cypher = hex_pad(perm(cypher, perm_table=rev_perm_table))
+        cypher = subs(cypher, subs_dict=rev_subs_dict)
+        cypher = bytes.fromhex(cypher)
+    
+    cypher = byte_xor(cypher, subk[0]).hex()
+    
+    return cypher
 
 if __name__  == '__main__':
     
     text = 0b0010011010110111
     hex_text = hex(text)
+    print(hex_text)
     
     if os.path.exists('keys.txt'):
         keys = generate_keys(path='keys.txt')
@@ -129,4 +155,6 @@ if __name__  == '__main__':
         keys = generate_keys(path=None)
     cypher = SPN(hex_text, keys)
     print(cypher)
+    dec_text = decrypt(cypher, keys)
+    print(dec_text)
         
