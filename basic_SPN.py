@@ -145,7 +145,7 @@ def decrypt(cypher, subkeys):
 
 if __name__  == '__main__':
     
-    text = 0b0010011010110111
+    text = 0b1010011010110111
     hex_text = hex(text)
     print(hex_text)
     
