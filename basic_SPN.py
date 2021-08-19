@@ -80,7 +80,8 @@ def perm(hex_input, perm_table=perm_table):
 def SPN(text, subkeys):
     """Simple Substitution Permutation Network"""
     
-    cypher = bytearray.fromhex(text[2:])
+    cypher = hex_pad(text[2:])
+    cypher = bytearray.fromhex(cypher)
 
     
     k1 = bytes.fromhex(subkeys[:BLOCK_SIZE].hex())
@@ -145,7 +146,7 @@ def decrypt(cypher, subkeys):
 
 if __name__  == '__main__':
     
-    text = 0b1010011010110111
+    text = 0b10101011111
     hex_text = hex(text)
     print(hex_text)
     
