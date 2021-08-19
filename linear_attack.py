@@ -7,6 +7,7 @@ Created on Mon Aug 16 09:28:18 2021
 
 import itertools as it
 import basic_SPN
+import numpy as np
 
 def str_xor(bit1, bit2):
     """Args:
@@ -46,9 +47,11 @@ def fill(str_in, n=4):
 
 def compute_matrix():
     """Compute the probability matrix for the Sbox"""
-    matrix = {}
+        
+    # get the subs_dict from the SPN in bits    
+    sbox = {fill(bin(int(k,16))[2:]):fill(bin(int(v,16))[2:]) for k,v in basic_SPN.subs_dict.items()}
     
-    sbox_in = ["".join(seq) for seq in it.product("01", repeat=4)]
-    sbox_out = [basic_SPN.subs_dict[hex(int(s,2))[2:]] for s in sbox_in]
-    sbox_out = [fill(bin(int(s,16))[2:]) for s in sbox_out]
-    return matrix, sbox_in, sbox_out
+    # initialize matrix
+    matrix = np.zeros((len(sbox),len(sbox)))
+    
+    return matrix, sbox
