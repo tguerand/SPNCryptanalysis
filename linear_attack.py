@@ -51,7 +51,23 @@ def compute_matrix():
     # get the subs_dict from the SPN in bits    
     sbox = {fill(bin(int(k,16))[2:]):fill(bin(int(v,16))[2:]) for k,v in basic_SPN.subs_dict.items()}
     
-    # initialize matrix
+    # initialize probability matrix
     matrix = np.zeros((len(sbox),len(sbox)))
+    
+    for i in range(len(sbox)):
+    
+        X1,X2,X3,X4 = [int(bit) for bit in fill(bin(i)[2:])]
+        Y1,Y2,Y3,Y4 = [int(bit) for bit in sbox[fill(bin(i)[2:])]]
+        
+        equ_in = [0, X4, X3, X3^X4, X2, X2^X4, X2^X3, X2^X3^X4, X1, X1^X4,
+                  X1^X3, X1^X3^X4, X1^X2, X1^X2^X4, X1^X2^X3, X1^X2^X3^X4]
+        equ_out = [0, Y4, Y3, Y3^Y4, Y2, Y2^Y4, Y2^Y3, Y2^Y3^Y4, Y1, Y1^Y4,
+                   Y1^Y3, Y1^Y3^Y4, Y1^Y2, Y1^Y2^Y4, Y1^Y2^Y3, Y1^Y2^Y3^Y4]
+        
+        # will optimize that later
+        for x in range(len(equ_in)):
+            for y in range(len(equ_out)):
+                matrix[x,y] += (equ_in[x] == equ_out[y])
+                
     
     return matrix, sbox
