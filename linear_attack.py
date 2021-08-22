@@ -5,6 +5,11 @@ Created on Mon Aug 16 09:28:18 2021
 @author: trist
 """
 
+# good explaination for the LAT : 
+# https://www.ukessays.com/essays/computer-science/understanding-linear-cryptanalysis-8803.php
+
+
+
 import itertools as it
 import basic_SPN
 import numpy as np
@@ -46,14 +51,16 @@ def fill(str_in, n=4):
     return str_in
 
 def compute_matrix():
-    """Compute the probability matrix for the Sbox"""
+    """Compute the probability matrix / Linear Approx Table
+    for the Sbox"""
         
     # get the subs_dict from the SPN in bits    
     sbox = {fill(bin(int(k,16))[2:]):fill(bin(int(v,16))[2:]) for k,v in basic_SPN.subs_dict.items()}
     
     # initialize probability matrix
-    matrix = np.zeros((len(sbox),len(sbox)))
+    matrix = np.zeros((len(sbox),len(sbox)), dtype=int)
     
+    # could change to u,v for u,v in sbox.items()
     for i in range(len(sbox)):
     
         X1,X2,X3,X4 = [int(bit) for bit in fill(bin(i)[2:])]
@@ -68,6 +75,23 @@ def compute_matrix():
         for x in range(len(equ_in)):
             for y in range(len(equ_out)):
                 matrix[x,y] += (equ_in[x] == equ_out[y])
-                
+    matrix = matrix - 8
+    prob_m = matrix / 16
     
-    return matrix, sbox
+    return matrix, prob_m, sbox
+
+m, pm, sbox = compute_matrix()
+print(m)
+
+# TODO: now we need to write the right approximations equations for
+# our sbox, to follow the right path of our sbox
+
+# we have :
+# X1 = Y1 + Y3 = 12/16
+# X1 + X2 + X3 + X4 = Y2 + Y4 = 12/16
+# X2 + X3 + X4 = Y2 
+
+
+
+def approx(matrix):
+    pass
